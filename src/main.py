@@ -1,5 +1,4 @@
 from fastapi import FastAPI
-from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from routers import products
 
@@ -15,6 +14,3 @@ app.add_middleware(
 )
 
 app.include_router(products.router)
-
-# Mount the frontend directory to serve static files
-app.mount("/", StaticFiles(directory="frontend", html=True), name="static")

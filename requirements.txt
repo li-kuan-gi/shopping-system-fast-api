@@ -2,5 +2,3 @@ fastapi[standard]
 supabase
 python-dotenv
 pydantic
-pytest
-black
