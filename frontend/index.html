@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shopping System</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <header class="app-header">
+        <div class="container header-content">
+            <div class="brand">
+                <h1>Shopping System</h1>
+                <p>Premium Selection</p>
+            </div>
+            <div id="auth-container">
+                <!-- Logged Out State -->
+                <div id="auth-forms">
+                    <input type="email" id="email" placeholder="Email" class="auth-input">
+                    <input type="password" id="password" placeholder="Password" class="auth-input">
+                    <button id="login-btn" class="btn btn-primary">Login</button>
+                    <button id="register-btn" class="btn btn-secondary">Register</button>
+                </div>
+                <!-- Logged In State -->
+                <div id="user-profile" style="display: none;">
+                    <span id="user-email"></span>
+                    <button id="logout-btn" class="btn btn-danger">Logout</button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        <div id="product-grid" class="product-grid">
+            <!-- Products will be injected here via JS -->
+        </div>
+    </main>
+
+    <script src="app.js"></script>
+</body>
+
+</html>

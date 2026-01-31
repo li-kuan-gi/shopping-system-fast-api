@@ -1,0 +1,50 @@
+from pydantic import BaseModel, ConfigDict
+from datetime import datetime
+
+
+# Category Schemas
+class CategoryBase(BaseModel):
+    name: str
+
+
+class CategoryCreate(CategoryBase):
+    pass
+
+
+class Category(CategoryBase):
+    id: int
+    created_at: datetime
+
+    model_config: ConfigDict = (  # pyright: ignore[reportIncompatibleVariableOverride]
+        ConfigDict(from_attributes=True)
+    )
+
+
+# Product Schemas
+class ProductBase(BaseModel):
+    name: str
+    description: str | None = None
+    price: float
+    stock: int = 0
+    category_id: int | None = None
+
+
+class ProductCreate(ProductBase):
+    pass
+
+
+class ProductUpdate(BaseModel):
+    name: str | None = None
+    description: str | None = None
+    price: float | None = None
+    stock: int | None = None
+    category_id: int | None = None
+
+
+class Product(ProductBase):
+    id: int
+    created_at: datetime
+
+    model_config: ConfigDict = (  # pyright: ignore[reportIncompatibleVariableOverride]
+        ConfigDict(from_attributes=True)
+    )
