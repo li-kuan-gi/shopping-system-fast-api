@@ -123,7 +123,7 @@ async function saveProduct(productId) {
 
         if (!token) return alert('You must be logged in to edit.');
 
-        const response = await fetch(`http://localhost:8000/products/${productId}`, {
+        const response = await fetch(`https://clean-vilma-explore-new-worlds-f9495307.koyeb.app/products/${productId}`, {
             method: 'PATCH',
             headers: {
                 'Content-Type': 'application/json',
