@@ -4,45 +4,83 @@ const supabaseKey = 'sb_publishable_CS1yiPqr6vSeRQ-3YIGwHQ_0nbRlC3R';
 const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 
 // Auth Elements
-const emailInput = document.getElementById('email');
-const passwordInput = document.getElementById('password');
-const loginBtn = document.getElementById('login-btn');
-const registerBtn = document.getElementById('register-btn');
-const logoutBtn = document.getElementById('logout-btn');
-const authForms = document.getElementById('auth-forms');
+const authButtons = document.getElementById('auth-buttons');
 const userProfile = document.getElementById('user-profile');
 const userEmailSpan = document.getElementById('user-email');
+const logoutBtn = document.getElementById('logout-btn');
 
-// Auth Functions
+const openLoginBtn = document.getElementById('open-login-btn');
+const openRegisterBtn = document.getElementById('open-register-btn');
+
+// Modal Elements
+const authModal = document.getElementById('auth-modal');
+const modalClose = document.getElementById('modal-close');
+const modalTitle = document.getElementById('modal-title');
+const modalEmailInput = document.getElementById('modal-email');
+const modalPasswordInput = document.getElementById('modal-password');
+const modalSubmitBtn = document.getElementById('modal-submit-btn');
+const modalToggleText = document.getElementById('modal-toggle-text');
+
+// Auth State
 let currentUser = null;
+let modalMode = 'login'; // 'login' or 'register'
 
-async function handleLogin() {
-    const email = emailInput.value;
-    const password = passwordInput.value;
-    if (!email || !password) return alert('Please enter email and password');
-
-    const { data, error } = await supabaseClient.auth.signInWithPassword({
-        email,
-        password
-    });
-
-    if (error) alert(error.message);
+// Modal Logic
+function openModal(mode = 'login') {
+    modalMode = mode;
+    updateModalUI();
+    authModal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
 }
 
-async function handleRegister() {
-    const email = emailInput.value;
-    const password = passwordInput.value;
+function closeModal() {
+    authModal.style.display = 'none';
+    document.body.style.overflow = 'auto';
+    modalEmailInput.value = '';
+    modalPasswordInput.value = '';
+}
+
+function updateModalUI() {
+    if (modalMode === 'login') {
+        modalTitle.textContent = 'Login';
+        modalSubmitBtn.textContent = 'Login';
+        modalToggleText.innerHTML = `Don't have an account? <a href="#" id="modal-toggle-link">Register</a>`;
+    } else {
+        modalTitle.textContent = 'Register';
+        modalSubmitBtn.textContent = 'Create Account';
+        modalToggleText.innerHTML = `Already have an account? <a href="#" id="modal-toggle-link">Login</a>`;
+    }
+
+    // Add click event for toggle link
+    const toggleLink = document.getElementById('modal-toggle-link');
+    if (toggleLink) {
+        toggleLink.onclick = (e) => {
+            e.preventDefault();
+            modalMode = (modalMode === 'login') ? 'register' : 'login';
+            updateModalUI();
+        };
+    }
+}
+
+// Auth Functions
+async function handleAuthAction() {
+    const email = modalEmailInput.value;
+    const password = modalPasswordInput.value;
     if (!email || !password) return alert('Please enter email and password');
 
-    const { data, error } = await supabaseClient.auth.signUp({
-        email,
-        password
-    });
-
-    if (error) {
-        alert(error.message);
+    if (modalMode === 'login') {
+        const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+        if (error) alert(error.message);
+        else closeModal();
     } else {
-        alert('Registration successful! Please check your email/login.');
+        const { data, error } = await supabaseClient.auth.signUp({ email, password });
+        if (error) {
+            alert(error.message);
+        } else {
+            alert('Registration successful! Please check your email.');
+            modalMode = 'login';
+            updateModalUI();
+        }
     }
 }
 
@@ -52,26 +90,35 @@ async function handleLogout() {
 }
 
 function updateAuthState(user) {
-    currentUser = user; // Store globally
+    currentUser = user;
     if (user) {
-        authForms.style.display = 'none';
-        userProfile.style.display = 'flex';
+        if (authButtons) authButtons.style.display = 'none';
+        if (userProfile) userProfile.style.display = 'flex';
         userEmailSpan.textContent = user.email;
     } else {
-        authForms.style.display = 'flex';
-        userProfile.style.display = 'none';
+        if (authButtons) authButtons.style.display = 'flex';
+        if (userProfile) userProfile.style.display = 'none';
         userEmailSpan.textContent = '';
-        emailInput.value = '';
-        passwordInput.value = '';
     }
-    // Re-fetch products to update UI (show/hide edit buttons)
     fetchProducts();
 }
 
 // Event Listeners
-loginBtn.addEventListener('click', handleLogin);
-registerBtn.addEventListener('click', handleRegister);
+openLoginBtn.addEventListener('click', () => openModal('login'));
+openRegisterBtn.addEventListener('click', () => openModal('register'));
+modalClose.addEventListener('click', closeModal);
+authModal.addEventListener('click', (e) => {
+    if (e.target === authModal) closeModal();
+});
+modalSubmitBtn.addEventListener('click', handleAuthAction);
 logoutBtn.addEventListener('click', handleLogout);
+
+// Enter key support
+[modalEmailInput, modalPasswordInput].forEach(input => {
+    input.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') handleAuthAction();
+    });
+});
 
 // Listen to auth state changes
 supabaseClient.auth.onAuthStateChange((event, session) => {
