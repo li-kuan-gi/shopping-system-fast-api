@@ -1,14 +1,15 @@
 from fastapi import Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from database import supabase
 
 # This scheme expects "Authorization: Bearer <token>"
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
+# Using HTTPBearer instead of OAuth2PasswordBearer for better Swagger UI experience
+security = HTTPBearer()
 
 
 def get_current_user(
-    token: str = Depends(
-        oauth2_scheme
+    auth: HTTPAuthorizationCredentials = Depends(
+        security
     ),  # pyright: ignore[reportCallInDefaultInitializer]
 ):
     """
@@ -17,6 +18,7 @@ def get_current_user(
     """
     try:
         # Verify the token via Supabase
+        token = auth.credentials
         user = supabase.auth.get_user(token)
         if not user or not user.user:
             raise HTTPException(
