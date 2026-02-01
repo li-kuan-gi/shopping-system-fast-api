@@ -1,5 +1,6 @@
 from pydantic import BaseModel, ConfigDict
 from datetime import datetime
+from typing import ClassVar
 
 
 # Category Schemas
@@ -15,9 +16,7 @@ class Category(CategoryBase):
     id: int
     created_at: datetime
 
-    model_config: ConfigDict = (  # pyright: ignore[reportIncompatibleVariableOverride]
-        ConfigDict(from_attributes=True)
-    )
+    model_config: ClassVar[ConfigDict] = ConfigDict(from_attributes=True)
 
 
 # Product Schemas
@@ -45,6 +44,4 @@ class Product(ProductBase):
     id: int
     created_at: datetime
 
-    model_config: ConfigDict = (  # pyright: ignore[reportIncompatibleVariableOverride]
-        ConfigDict(from_attributes=True)
-    )
+    model_config: ClassVar[ConfigDict] = ConfigDict(from_attributes=True)
