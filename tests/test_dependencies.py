@@ -19,21 +19,21 @@ def test_key_pair() -> tuple[ec.EllipticCurvePrivateKey, Mapping[str, object]]:
     """Generates a stable EC key pair for the test session."""
     private_key = ec.generate_private_key(ec.SECP256R1())
     public_key = private_key.public_key()
-    
+
     # Get coordinates for JWK
     numbers = public_key.public_numbers()
     x = numbers.x.to_bytes(32, "big")
     y = numbers.y.to_bytes(32, "big")
-    
+
     jwk = {
         "kty": "EC",
         "crv": "P-256",
         "x": bytes_to_base64url(x),
         "y": bytes_to_base64url(y),
         "alg": "ES256",
-        "use": "sig"
+        "use": "sig",
     }
-    
+
     return private_key, jwk
 
 
@@ -81,6 +81,7 @@ def test_get_current_user_expired_token(
 ) -> None:
     private_key, _ = test_key_pair
     import time
+
     payload = {"sub": "123", "exp": time.time() - 100, "aud": "authenticated"}
     token = jwt.encode(payload, private_key, algorithm="ES256")
 
