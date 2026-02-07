@@ -45,3 +45,9 @@ class Product(ProductBase):
     created_at: datetime
 
     model_config: ClassVar[ConfigDict] = ConfigDict(from_attributes=True)
+
+
+# Cart Schemas
+class CartItemOperation(BaseModel):
+    product_id: int
+    quantity: int = 1

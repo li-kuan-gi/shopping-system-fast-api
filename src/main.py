@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from routers import products
+from src.routers import products, cart
 
 app = FastAPI(title="Shopping System API")
 
@@ -20,3 +20,4 @@ async def root():
 
 
 app.include_router(products.router)
+app.include_router(cart.router)
