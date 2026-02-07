@@ -1,8 +1,8 @@
 from typing import Annotated
 from fastapi import APIRouter, HTTPException, status, Depends
-from database import supabase
-from schemas import Product, ProductCreate, ProductUpdate
-from dependencies import get_current_user
+from src.database import supabase
+from src.schemas import Product, ProductCreate, ProductUpdate
+from src.dependencies import get_current_user
 
 router = APIRouter(prefix="/products", tags=["products"])
 

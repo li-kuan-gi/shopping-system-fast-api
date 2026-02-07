@@ -28,6 +28,9 @@
                 <!-- Logged In State -->
                 <div id="user-profile" style="display: none;">
                     <span id="user-email"></span>
+                    <button id="cart-toggle-btn" class="btn btn-secondary">
+                        Cart (<span id="cart-count">0</span>)
+                    </button>
                     <button id="logout-btn" class="btn btn-danger">Logout</button>
                 </div>
             </div>
@@ -39,6 +42,25 @@
             <!-- Products will be injected here via JS -->
         </div>
     </main>
+
+    <!-- Cart Panel -->
+    <div id="cart-panel" class="cart-panel">
+        <div class="cart-header">
+            <h2>Your Cart</h2>
+            <button id="cart-close-btn" class="modal-close">&times;</button>
+        </div>
+        <div id="cart-items" class="cart-items">
+            <!-- Cart items will be injected here -->
+        </div>
+        <div class="cart-footer">
+            <div class="cart-total">
+                <span>Total:</span>
+                <span id="cart-total-amount">$0.00</span>
+            </div>
+            <button class="btn btn-primary btn-block">Checkout</button>
+        </div>
+    </div>
+    <div id="cart-overlay" class="modal-overlay" style="display: none;"></div>
 
     <!-- Auth Modal -->
     <div id="auth-modal" class="modal-overlay" style="display: none;">

@@ -21,9 +21,19 @@ const modalPasswordInput = document.getElementById('modal-password');
 const modalSubmitBtn = document.getElementById('modal-submit-btn');
 const modalToggleText = document.getElementById('modal-toggle-text');
 
+// Cart Elements
+const cartPanel = document.getElementById('cart-panel');
+const cartOverlay = document.getElementById('cart-overlay');
+const cartToggleBtn = document.getElementById('cart-toggle-btn');
+const cartCloseBtn = document.getElementById('cart-close-btn');
+const cartItemsContainer = document.getElementById('cart-items');
+const cartCountSpan = document.getElementById('cart-count');
+const cartTotalAmountSpan = document.getElementById('cart-total-amount');
+
 // Auth State
 let currentUser = null;
 let modalMode = 'login'; // 'login' or 'register'
+let cartItems = [];
 
 // Modal Logic
 function openModal(mode = 'login') {
@@ -101,6 +111,135 @@ function updateAuthState(user) {
         userEmailSpan.textContent = '';
     }
     fetchProducts();
+    if (user) {
+        fetchCart();
+    } else {
+        cartItems = [];
+        updateCartUI();
+    }
+}
+
+// Cart Logic
+function toggleCart(show) {
+    if (show) {
+        cartPanel.classList.add('open');
+        cartOverlay.style.display = 'block';
+        document.body.style.overflow = 'hidden';
+    } else {
+        cartPanel.classList.remove('open');
+        cartOverlay.style.display = 'none';
+        document.body.style.overflow = 'auto';
+    }
+}
+
+async function fetchCart() {
+    try {
+        const { data, error } = await supabaseClient
+            .from('cart_items')
+            .select(`
+                id,
+                product_id,
+                quantity,
+                products (
+                    name,
+                    price
+                )
+            `);
+
+        if (error) throw error;
+        cartItems = data || [];
+        updateCartUI();
+    } catch (error) {
+        console.error('Error fetching cart:', error);
+    }
+}
+
+async function addToCart(productId) {
+    if (!currentUser) return openModal('login');
+
+    try {
+        const { data: { session } } = await supabaseClient.auth.getSession();
+        const token = session?.access_token;
+
+        const response = await fetch('http://127.0.0.1:8000/cart/add-item', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ product_id: productId, quantity: 1 })
+        });
+
+        if (!response.ok) throw new Error('Failed to add item to cart');
+
+        fetchCart();
+    } catch (error) {
+        console.error('Error adding to cart:', error);
+        alert('Error adding to cart');
+    }
+}
+
+async function removeFromCart(productId, quantity = 1) {
+    try {
+        const { data: { session } } = await supabaseClient.auth.getSession();
+        const token = session?.access_token;
+
+        const response = await fetch('http://127.0.0.1:8000/cart/remove-item', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ product_id: productId, quantity })
+        });
+
+        if (!response.ok) throw new Error('Failed to remove item from cart');
+
+        fetchCart();
+    } catch (error) {
+        console.error('Error removing from cart:', error);
+        alert('Error removing from cart');
+    }
+}
+
+function updateCartUI() {
+    // Update count
+    const totalItems = cartItems.reduce((acc, item) => acc + item.quantity, 0);
+    if (cartCountSpan) cartCountSpan.textContent = totalItems;
+
+    // Render items
+    if (cartItemsContainer) {
+        cartItemsContainer.innerHTML = '';
+        let totalAmount = 0;
+
+        if (cartItems.length === 0) {
+            cartItemsContainer.innerHTML = '<p style="color: var(--text-secondary); text-align: center; margin-top: 2rem;">Your cart is empty.</p>';
+        } else {
+            cartItems.forEach(item => {
+                const itemTotal = item.products.price * item.quantity;
+                totalAmount += itemTotal;
+
+                const itemElement = document.createElement('div');
+                itemElement.className = 'cart-item';
+                itemElement.innerHTML = `
+                    <div class="cart-item-details">
+                        <div class="cart-item-name">${item.products.name}</div>
+                        <div class="cart-item-price">${formatCurrency(item.products.price)}</div>
+                        <div class="cart-item-quantity">
+                            <button class="quantity-btn" onclick="removeFromCart(${item.product_id}, 1)">-</button>
+                            <span>${item.quantity}</span>
+                            <button class="quantity-btn" onclick="addToCart(${item.product_id})">+</button>
+                        </div>
+                    </div>
+                    <div class="cart-item-total" style="font-weight: 600;">
+                        ${formatCurrency(itemTotal)}
+                    </div>
+                `;
+                cartItemsContainer.appendChild(itemElement);
+            });
+        }
+        if (cartTotalAmountSpan) cartTotalAmountSpan.textContent = formatCurrency(totalAmount);
+    }
 }
 
 // Event Listeners
@@ -112,6 +251,9 @@ authModal.addEventListener('click', (e) => {
 });
 modalSubmitBtn.addEventListener('click', handleAuthAction);
 logoutBtn.addEventListener('click', handleLogout);
+if (cartToggleBtn) cartToggleBtn.addEventListener('click', () => toggleCart(true));
+if (cartCloseBtn) cartCloseBtn.addEventListener('click', () => toggleCart(false));
+if (cartOverlay) cartOverlay.addEventListener('click', () => toggleCart(false));
 
 // Enter key support
 [modalEmailInput, modalPasswordInput].forEach(input => {
@@ -227,6 +369,11 @@ function renderProducts(products) {
                 <div class="product-stock ${stockClass}">
                     ${product.stock} in stock
                 </div>
+            </div>
+            <div style="margin-top: 1rem; display: flex; justify-content: flex-end;">
+                <button onclick="addToCart(${product.product_id})" class="btn-add-cart">
+                    Add to Cart
+                </button>
             </div>
         `;
 
