@@ -3,6 +3,8 @@ const supabaseUrl = 'https://yqvjqdontrnqdvmqdbtl.supabase.co';
 const supabaseKey = 'sb_publishable_CS1yiPqr6vSeRQ-3YIGwHQ_0nbRlC3R';
 const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 
+const host = 'http://127.0.0.1:8000';
+
 // Auth Elements
 const authButtons = document.getElementById('auth-buttons');
 const userProfile = document.getElementById('user-profile');
@@ -161,7 +163,7 @@ async function addToCart(productId) {
         const { data: { session } } = await supabaseClient.auth.getSession();
         const token = session?.access_token;
 
-        const response = await fetch('http://127.0.0.1:8000/cart/add-item', {
+        const response = await fetch(`${host}/cart/add-item`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -184,7 +186,7 @@ async function removeFromCart(productId, quantity = 1) {
         const { data: { session } } = await supabaseClient.auth.getSession();
         const token = session?.access_token;
 
-        const response = await fetch('http://127.0.0.1:8000/cart/remove-item', {
+        const response = await fetch(`${host}/cart/remove-item`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -312,7 +314,7 @@ async function saveProduct(productId) {
 
         if (!token) return alert('You must be logged in to edit.');
 
-        const response = await fetch(`https://clean-vilma-explore-new-worlds-f9495307.koyeb.app/products/${productId}`, {
+        const response = await fetch(`${host}/products/${productId}`, {
             method: 'PATCH',
             headers: {
                 'Content-Type': 'application/json',
