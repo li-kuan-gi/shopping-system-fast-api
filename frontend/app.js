@@ -175,6 +175,7 @@ async function addToCart(productId) {
         if (!response.ok) throw new Error('Failed to add item to cart');
 
         fetchCart();
+        fetchProducts();
     } catch (error) {
         console.error('Error adding to cart:', error);
         alert('Error adding to cart');
@@ -198,6 +199,7 @@ async function removeFromCart(productId, quantity = 1) {
         if (!response.ok) throw new Error('Failed to remove item from cart');
 
         fetchCart();
+        fetchProducts();
     } catch (error) {
         console.error('Error removing from cart:', error);
         alert('Error removing from cart');
