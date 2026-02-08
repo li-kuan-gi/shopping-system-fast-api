@@ -30,12 +30,3 @@ def update_product(
     if not response.data:
         raise HTTPException(status_code=404, detail="Product not found")
     return response.data[0]
-
-
-@router.delete("/{product_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_product(
-    product_id: int,
-    _user: Annotated[dict[str, object], Depends(get_current_user)],
-):
-    _ = supabase.table("products").delete().eq("id", product_id).execute()
-    return None
