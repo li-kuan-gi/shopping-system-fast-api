@@ -7,7 +7,7 @@ from unittest.mock import MagicMock
 from fastapi import HTTPException
 from fastapi.security import HTTPAuthorizationCredentials
 from cryptography.hazmat.primitives.asymmetric import ec
-from dependencies import get_current_user
+from src.dependencies import get_current_user
 
 
 def bytes_to_base64url(b: bytes) -> str:

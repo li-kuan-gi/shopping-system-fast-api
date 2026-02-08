@@ -278,65 +278,7 @@ function formatCurrency(amount) {
     }).format(amount);
 }
 
-function enableEditMode(productId, currentName) {
-    const titleElement = document.getElementById(`title-${productId}`);
-    const actionsElement = document.getElementById(`actions-${productId}`);
 
-    // Replace title with input
-    titleElement.innerHTML = `
-        <input type="text" id="input-${productId}" value="${currentName}" class="edit-input" />
-    `;
-
-    // Replace Edit button with Save/Cancel
-    actionsElement.innerHTML = `
-        <button onclick="saveProduct(${productId})" class="btn-save">Save</button>
-        <button onclick="cancelEditMode(${productId}, '${currentName}')" class="btn-cancel">Cancel</button>
-    `;
-}
-
-function cancelEditMode(productId, originalName) {
-    const titleElement = document.getElementById(`title-${productId}`);
-    const actionsElement = document.getElementById(`actions-${productId}`);
-
-    titleElement.textContent = originalName;
-    actionsElement.innerHTML = `
-        <button onclick="enableEditMode(${productId}, '${originalName}')" class="btn-edit">Edit</button>
-    `;
-}
-
-async function saveProduct(productId) {
-    const inputElement = document.getElementById(`input-${productId}`);
-    const newName = inputElement.value;
-
-    if (!newName) return alert('Name cannot be empty');
-
-    try {
-        const { data: { session } } = await supabaseClient.auth.getSession();
-        const token = session?.access_token;
-
-        if (!token) return alert('You must be logged in to edit.');
-
-        const response = await fetch(`${host}/products/${productId}`, {
-            method: 'PATCH',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify({ name: newName })
-        });
-
-        if (!response.ok) {
-            throw new Error('Failed to update product');
-        }
-
-        // Refresh products
-        fetchProducts();
-
-    } catch (error) {
-        console.error('Error updating product:', error);
-        alert('Error updating product: ' + error.message);
-    }
-}
 
 function renderProducts(products) {
     const grid = document.getElementById('product-grid');
@@ -355,16 +297,12 @@ function renderProducts(products) {
         const isLowStock = product.stock < 50;
         const stockClass = isLowStock ? 'stock-low' : 'stock-high';
 
-        const editButton = currentUser
-            ? `<div id="actions-${product.product_id}" class="card-actions">
-                 <button onclick="enableEditMode(${product.product_id}, '${product.name.replace(/'/g, "\\'")}')" class="btn-edit">Edit</button>
-               </div>`
-            : '';
+
 
         card.innerHTML = `
             <div class="card-header">
                 <span class="category-badge">${product.category_name || 'Uncategorized'}</span>
-                ${editButton}
+
             </div>
             <h2 id="title-${product.product_id}" class="product-name">${product.name}</h2>
             <p class="product-description">${product.description || ''}</p>
