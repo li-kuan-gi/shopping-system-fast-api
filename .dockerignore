@@ -25,6 +25,12 @@ htmlcov/
 # Git
 .git/
 .gitignore
+.github/
+
+# Development
+tests/
+frontend/
+requirements-dev.txt
 
 # Environment
 .env.local
