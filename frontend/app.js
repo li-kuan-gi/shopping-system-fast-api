@@ -3,7 +3,7 @@ const supabaseUrl = 'https://yqvjqdontrnqdvmqdbtl.supabase.co';
 const supabaseKey = 'sb_publishable_CS1yiPqr6vSeRQ-3YIGwHQ_0nbRlC3R';
 const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 
-const host = 'http://127.0.0.1:8000';
+const host = 'https://shopping-system-fast-api.onrender.com';
 
 // Auth Elements
 const authButtons = document.getElementById('auth-buttons');
