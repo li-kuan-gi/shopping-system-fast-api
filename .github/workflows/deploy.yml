@@ -11,6 +11,7 @@ on:
       - 'requirements-dev.txt'
       - 'Dockerfile'
       - '.dockerignore'
+      - '.github/workflows/deploy.yml'
   workflow_dispatch:
 
 jobs:
@@ -30,6 +31,7 @@ jobs:
               - 'requirements.txt'
               - 'Dockerfile'
               - '.dockerignore'
+              - '.github/workflows/deploy.yml'
 
   test-and-lint:
     runs-on: ubuntu-latest
