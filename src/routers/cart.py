@@ -16,6 +16,27 @@ def add_item_to_cart(
     if not user_id:
         raise HTTPException(status_code=401, detail="User ID not found in token")
 
+    # Check product stock
+    product_response = (
+        supabase.table("products")
+        .select("stock")
+        .eq("id", operation.product_id)
+        .execute()
+    )
+
+    if not product_response.data:
+        raise HTTPException(status_code=404, detail="Product not found")
+
+    current_stock = product_response.data[0]["stock"]
+
+    # Decrease product stock
+    _ = (
+        supabase.table("products")
+        .update({"stock": current_stock - operation.quantity})
+        .eq("id", operation.product_id)
+        .execute()
+    )
+
     # Check if item exists in cart
     response = (
         supabase.table("cart_items")
@@ -75,6 +96,23 @@ def remove_item_from_cart(
 
     current_quantity: int = response.data[0]["quantity"]
     new_quantity: int = current_quantity - operation.quantity
+
+    # Increase product stock
+    product_response = (
+        supabase.table("products")
+        .select("stock")
+        .eq("id", operation.product_id)
+        .execute()
+    )
+
+    if product_response.data:
+        current_stock = product_response.data[0]["stock"]
+        _ = (
+            supabase.table("products")
+            .update({"stock": current_stock + operation.quantity})
+            .eq("id", operation.product_id)
+            .execute()
+        )
 
     if new_quantity <= 0:
         # Delete item
