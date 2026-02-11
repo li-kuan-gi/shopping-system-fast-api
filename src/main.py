@@ -2,8 +2,6 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from src.routers import cart
 
-app = FastAPI(title="Shopping System API")
-
 # Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
