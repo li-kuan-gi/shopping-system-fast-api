@@ -19,4 +19,3 @@ async def root():
     return {"status": "success", "message": "Shopping System API is running"}
 
 
-app.include_router(cart.router)
