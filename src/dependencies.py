@@ -7,7 +7,6 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from jwt import PyJWK
 
 # This scheme expects "Authorization: Bearer <token>"
-security = HTTPBearer()
 
 
 def get_current_user(
