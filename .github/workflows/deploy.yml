@@ -12,6 +12,17 @@ on:
       - 'Dockerfile'
       - '.dockerignore'
       - '.github/workflows/deploy.yml'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'src/**'
+      - 'tests/**'
+      - 'requirements.txt'
+      - 'requirements-dev.txt'
+      - 'Dockerfile'
+      - '.dockerignore'
+      - '.github/workflows/deploy.yml'
   workflow_dispatch:
 
 jobs:
@@ -58,8 +69,8 @@ jobs:
 
   build-and-deploy:
     needs: [test-and-lint, changes]
-    # Only run if tests passed AND relevant files changed
-    if: needs.changes.outputs.deployable == 'true'
+    # Only run if tests passed AND relevant files changed AND it is a push event (not PR)
+    if: needs.changes.outputs.deployable == 'true' && github.event_name == 'push'
     runs-on: ubuntu-latest
     permissions:
       contents: read
