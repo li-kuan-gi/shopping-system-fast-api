@@ -3,10 +3,16 @@ import sys
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, Session
+from sqlalchemy.orm import sessionmaker
 
 # Add project root to sys.path so that "src" can be imported
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
+# Set a dummy DATABASE_URL if not present to avoid import error in src/database.py
+# The actual database used for testing is TEST_DATABASE_URL defined below.
+_ = os.environ.setdefault(
+    "DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/unused"
+)
 
 from src.models import Base
 from src.database import get_db
