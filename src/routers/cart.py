@@ -69,7 +69,14 @@ def remove_item_from_cart(
 ):
     user_id = user.id
 
-    # Check if item exists in cart
+    # Lock Product first (Acts as a gatekeeper for this product)
+    product = (
+        db.query(Product)
+        .filter(Product.id == operation.product_id)
+        .with_for_update()
+        .first()
+    )
+
     cart_item = (
         db.query(CartItem)
         .filter(
@@ -83,14 +90,6 @@ def remove_item_from_cart(
 
     # Calculate new quantity
     new_quantity: int = cart_item.quantity - operation.quantity
-
-    # Increase product stock with row-level lock
-    product = (
-        db.query(Product)
-        .filter(Product.id == operation.product_id)
-        .with_for_update()
-        .first()
-    )
 
     if product:
         product.stock += operation.quantity
