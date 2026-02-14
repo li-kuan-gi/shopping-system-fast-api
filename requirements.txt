@@ -2,3 +2,5 @@ fastapi[standard]
 supabase
 pyjwt
 cryptography
+sqlalchemy
+psycopg2-binary

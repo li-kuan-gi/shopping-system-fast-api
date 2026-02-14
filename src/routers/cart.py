@@ -1,6 +1,8 @@
 from typing import Annotated
 from fastapi import APIRouter, HTTPException, status, Depends
-from src.database import supabase
+from sqlalchemy.orm import Session
+from src.database import get_db
+from src.models import Product, CartItem
 from src.schemas import CartItemOperation
 from src.dependencies import get_current_user
 
@@ -11,64 +13,47 @@ router = APIRouter(prefix="/cart", tags=["cart"])
 def add_item_to_cart(
     operation: CartItemOperation,
     user: Annotated[dict[str, object], Depends(get_current_user)],
+    db: Annotated[Session, Depends(get_db)],
 ):
     user_id: str | None = user.get("sub")
     if not user_id:
         raise HTTPException(status_code=401, detail="User ID not found in token")
 
     # Check product stock
-    product_response = (
-        supabase.table("products")
-        .select("stock")
-        .eq("id", operation.product_id)
-        .execute()
-    )
+    product = db.query(Product).filter(Product.id == operation.product_id).first()
 
-    if not product_response.data:
+    if not product:
         raise HTTPException(status_code=404, detail="Product not found")
 
-    current_stock = product_response.data[0]["stock"]
+    if product.stock < operation.quantity:
+        raise HTTPException(status_code=400, detail="Insufficient stock")
 
     # Decrease product stock
-    _ = (
-        supabase.table("products")
-        .update({"stock": current_stock - operation.quantity})
-        .eq("id", operation.product_id)
-        .execute()
-    )
+    product.stock -= operation.quantity
 
     # Check if item exists in cart
-    response = (
-        supabase.table("cart_items")
-        .select("quantity")
-        .eq("user_id", user_id)
-        .eq("product_id", operation.product_id)
-        .execute()
+    cart_item = (
+        db.query(CartItem)
+        .filter(
+            CartItem.user_id == user_id, CartItem.product_id == operation.product_id
+        )
+        .first()
     )
 
-    if response.data:
+    if cart_item:
         # Update existing item
-        new_quantity: int = response.data[0]["quantity"] + operation.quantity
-        _ = (
-            supabase.table("cart_items")
-            .update({"quantity": new_quantity})
-            .eq("user_id", user_id)
-            .eq("product_id", operation.product_id)
-            .execute()
-        )
+        cart_item.quantity += operation.quantity
     else:
         # Insert new item
-        _ = (
-            supabase.table("cart_items")
-            .insert(
-                {
-                    "user_id": user_id,
-                    "product_id": operation.product_id,
-                    "quantity": operation.quantity,
-                }
-            )
-            .execute()
+        cart_item = CartItem(
+            user_id=user_id,
+            product_id=operation.product_id,
+            quantity=operation.quantity,
         )
+        db.add(cart_item)
+
+    # Commit the transaction
+    db.commit()
 
     return {"status": "success", "message": "Item added to cart"}
 
@@ -77,60 +62,40 @@ def add_item_to_cart(
 def remove_item_from_cart(
     operation: CartItemOperation,
     user: Annotated[dict[str, object], Depends(get_current_user)],
+    db: Annotated[Session, Depends(get_db)],
 ):
     user_id = user.get("sub")
     if not user_id:
         raise HTTPException(status_code=401, detail="User ID not found in token")
 
     # Check if item exists in cart
-    response = (
-        supabase.table("cart_items")
-        .select("quantity")
-        .eq("user_id", user_id)
-        .eq("product_id", operation.product_id)
-        .execute()
+    cart_item = (
+        db.query(CartItem)
+        .filter(
+            CartItem.user_id == user_id, CartItem.product_id == operation.product_id
+        )
+        .first()
     )
 
-    if not response.data:
+    if not cart_item:
         raise HTTPException(status_code=404, detail="Item not found in cart")
 
-    current_quantity: int = response.data[0]["quantity"]
-    new_quantity: int = current_quantity - operation.quantity
+    # Calculate new quantity
+    new_quantity: int = cart_item.quantity - operation.quantity
 
     # Increase product stock
-    product_response = (
-        supabase.table("products")
-        .select("stock")
-        .eq("id", operation.product_id)
-        .execute()
-    )
+    product = db.query(Product).filter(Product.id == operation.product_id).first()
 
-    if product_response.data:
-        current_stock = product_response.data[0]["stock"]
-        _ = (
-            supabase.table("products")
-            .update({"stock": current_stock + operation.quantity})
-            .eq("id", operation.product_id)
-            .execute()
-        )
+    if product:
+        product.stock += operation.quantity
 
     if new_quantity <= 0:
         # Delete item
-        _ = (
-            supabase.table("cart_items")
-            .delete()
-            .eq("user_id", user_id)
-            .eq("product_id", operation.product_id)
-            .execute()
-        )
+        db.delete(cart_item)
+        db.commit()
         return {"status": "success", "message": "Item removed from cart"}
     else:
         # Update quantity
-        _ = (
-            supabase.table("cart_items")
-            .update({"quantity": new_quantity})
-            .eq("user_id", user_id)
-            .eq("product_id", operation.product_id)
-            .execute()
-        )
+        cart_item.quantity = new_quantity
+        db.commit()
         return {"status": "success", "message": "Item quantity decreased"}
