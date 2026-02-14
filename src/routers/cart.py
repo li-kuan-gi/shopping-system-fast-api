@@ -17,8 +17,13 @@ def add_item_to_cart(
 ):
     user_id: str = user.id
 
-    # Check product stock
-    product = db.query(Product).filter(Product.id == operation.product_id).first()
+    # Check product stock with row-level lock
+    product = (
+        db.query(Product)
+        .filter(Product.id == operation.product_id)
+        .with_for_update()
+        .first()
+    )
 
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
@@ -79,8 +84,13 @@ def remove_item_from_cart(
     # Calculate new quantity
     new_quantity: int = cart_item.quantity - operation.quantity
 
-    # Increase product stock
-    product = db.query(Product).filter(Product.id == operation.product_id).first()
+    # Increase product stock with row-level lock
+    product = (
+        db.query(Product)
+        .filter(Product.id == operation.product_id)
+        .with_for_update()
+        .first()
+    )
 
     if product:
         product.stock += operation.quantity
