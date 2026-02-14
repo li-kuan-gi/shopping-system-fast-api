@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 import os
 import jwt
 import json
@@ -10,9 +11,14 @@ from jwt import PyJWK
 security = HTTPBearer()
 
 
+@dataclass
+class User:
+    id: str
+
+
 def get_current_user(
     auth: Annotated[HTTPAuthorizationCredentials, Depends(security)],
-) -> dict[str, object]:
+) -> User:
     """
     Verifies the JWT token locally using the Supabase JWT secret.
     Returns the decoded token payload if valid.
@@ -35,7 +41,13 @@ def get_current_user(
             audience="authenticated",
             options={"verify_aud": True},
         )
-        return payload
+        user_id = payload.get("sub")
+        if not user_id or not isinstance(user_id, str):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="User ID not found in token",
+            )
+        return User(id=user_id)
     except jwt.ExpiredSignatureError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

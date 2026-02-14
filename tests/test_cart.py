@@ -27,7 +27,7 @@ class TestAddItemToCart:
         # Verify cart item was created
         cart_item = (
             db_session.query(CartItem)
-            .filter(CartItem.user_id == mock_user["sub"], CartItem.product_id == 1)
+            .filter(CartItem.user_id == mock_user.id, CartItem.product_id == 1)
             .first()
         )
         assert cart_item is not None
@@ -75,7 +75,7 @@ class TestRemoveItemFromCart:
         db_session.add(product)
         db_session.commit()
 
-        cart_item = CartItem(user_id=mock_user["sub"], product_id=1, quantity=3)
+        cart_item = CartItem(user_id=mock_user.id, product_id=1, quantity=3)
         db_session.add(cart_item)
         db_session.commit()
 
@@ -118,7 +118,7 @@ class TestRemoveItemFromCart:
         db_session.add(product)
         db_session.commit()
 
-        cart_item = CartItem(user_id=mock_user["sub"], product_id=1, quantity=2)
+        cart_item = CartItem(user_id=mock_user.id, product_id=1, quantity=2)
         db_session.add(cart_item)
         db_session.commit()
 

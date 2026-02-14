@@ -59,8 +59,7 @@ def test_get_current_user_success(
 
     user = get_current_user(auth)
 
-    assert user["sub"] == "123"
-    assert user["email"] == "test@example.com"
+    assert user.id == "123"
 
 
 def test_get_current_user_missing_secret(monkeypatch: pytest.MonkeyPatch) -> None:

@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from src.database import get_db
 from src.models import Product, CartItem
 from src.schemas import CartItemOperation
-from src.dependencies import get_current_user
+from src.dependencies import get_current_user, User
 
 router = APIRouter(prefix="/cart", tags=["cart"])
 
@@ -12,12 +12,10 @@ router = APIRouter(prefix="/cart", tags=["cart"])
 @router.post("/add-item", status_code=status.HTTP_200_OK)
 def add_item_to_cart(
     operation: CartItemOperation,
-    user: Annotated[dict[str, object], Depends(get_current_user)],
+    user: Annotated[User, Depends(get_current_user)],
     db: Annotated[Session, Depends(get_db)],
 ):
-    user_id: str | None = user.get("sub")
-    if not user_id:
-        raise HTTPException(status_code=401, detail="User ID not found in token")
+    user_id: str = user.id
 
     # Check product stock
     product = db.query(Product).filter(Product.id == operation.product_id).first()
@@ -61,12 +59,10 @@ def add_item_to_cart(
 @router.post("/remove-item", status_code=status.HTTP_200_OK)
 def remove_item_from_cart(
     operation: CartItemOperation,
-    user: Annotated[dict[str, object], Depends(get_current_user)],
+    user: Annotated[User, Depends(get_current_user)],
     db: Annotated[Session, Depends(get_db)],
 ):
-    user_id = user.get("sub")
-    if not user_id:
-        raise HTTPException(status_code=401, detail="User ID not found in token")
+    user_id = user.id
 
     # Check if item exists in cart
     cart_item = (
