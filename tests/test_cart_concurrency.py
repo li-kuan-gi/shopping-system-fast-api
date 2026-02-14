@@ -87,3 +87,75 @@ def test_add_item_concurrency(test_engine, mock_user):
     finally:
         # Cleanup overrides
         app.dependency_overrides.clear()
+
+
+def test_add_remove_alternating_concurrency(test_engine, mock_user):
+    """
+    Test that concurrent alternating requests to add and remove items
+    correctly maintain stock and cart quantity, preventing StaleDataError.
+    """
+    TestingSessionLocal = sessionmaker(
+        autocommit=False, autoflush=False, bind=test_engine
+    )
+
+    def override_get_db():
+        db = TestingSessionLocal()
+        try:
+            yield db
+        finally:
+            db.close()
+
+    app.dependency_overrides[get_db] = override_get_db
+    app.dependency_overrides[get_current_user] = lambda: mock_user
+
+    try:
+        # Arrange: Create a product
+        db = TestingSessionLocal()
+        product_id = 888
+        initial_stock = 100
+        db.add(Product(id=product_id, stock=initial_stock))
+        db.commit()
+        db.close()
+
+        num_cycles = 10
+
+        def alternating_ops(client):
+            # Add 2 items, then remove 1 item
+            r1 = client.post(
+                "/cart/add-item", json={"product_id": product_id, "quantity": 2}
+            )
+            r2 = client.post(
+                "/cart/remove-item", json={"product_id": product_id, "quantity": 1}
+            )
+            return [r1, r2]
+
+        with TestClient(app) as client:
+            with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
+                results = list(
+                    executor.map(lambda _: alternating_ops(client), range(num_cycles))
+                )
+
+        # Assert: All requests should succeed (no StaleDataError / 500)
+        for op_results in results:
+            for response in op_results:
+                assert (
+                    response.status_code == 200
+                ), f"Request failed: {response.status_code} - {response.text}"
+
+        # Verify final state
+        # Net change per cycle: +2 added, -1 removed = +1 in cart, -1 in stock
+        # Total change: +10 in cart, -10 in stock
+        db = TestingSessionLocal()
+        product = db.query(Product).filter(Product.id == product_id).one()
+        cart_item = (
+            db.query(CartItem)
+            .filter(CartItem.user_id == mock_user.id, CartItem.product_id == product_id)
+            .one()
+        )
+
+        assert product.stock == initial_stock - num_cycles
+        assert cart_item.quantity == num_cycles
+        db.close()
+
+    finally:
+        app.dependency_overrides.clear()
