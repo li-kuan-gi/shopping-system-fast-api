@@ -16,7 +16,7 @@ _ = os.environ.setdefault(
 
 from src.models import Base
 from src.database import get_db
-from src.dependencies import get_current_user
+from src.dependencies import get_current_user, User
 
 # Test database URL (matches docker-compose.test.yml)
 TEST_DATABASE_URL = "postgresql://postgres:postgres@localhost:5433/shopping_test"
@@ -60,7 +60,7 @@ def db_session(test_engine):
 @pytest.fixture(scope="function")
 def mock_user():
     """Mock authenticated user data."""
-    return {"sub": "test-user-123", "email": "test@example.com"}
+    return User(id="test-user-123")
 
 
 @pytest.fixture(scope="function")
