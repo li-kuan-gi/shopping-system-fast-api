@@ -65,8 +65,21 @@ jobs:
       - name: Run Black Linting
         run: black --check .
         
+      - name: Start test database
+        timeout-minutes: 2
+        run: |
+          # Start database and wait for health check to pass (with timeout)
+          docker compose -f docker-compose.test.yml up -d --wait
+          
       - name: Run Tests
-        run: pytest tests/
+        timeout-minutes: 5
+        run: pytest tests/ -v --tb=short
+
+      - name: Stop test database
+        # Always run cleanup, even if tests fail
+        if: always()
+        run: |
+          docker compose -f docker-compose.test.yml down
 
   build-and-deploy:
     needs: [test-and-lint, changes]
