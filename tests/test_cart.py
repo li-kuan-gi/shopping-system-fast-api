@@ -62,7 +62,7 @@ class TestAddItemToCart:
             "/cart/add-item", json={"product_id": 1, "quantity": 1}
         )
 
-        assert response.status_code == 403
+        assert response.status_code == 401
 
 
 class TestRemoveItemFromCart:
@@ -127,4 +127,4 @@ class TestRemoveItemFromCart:
             "/cart/remove-item", json={"product_id": 1, "quantity": 1}
         )
 
-        assert response.status_code == 403
+        assert response.status_code == 401
