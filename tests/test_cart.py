@@ -19,22 +19,17 @@ class TestAddItemToCart:
         db_session.commit()
 
         # Add item to cart
-        response = client.post(
-            "/cart/add-item",
-            json={"product_id": 1, "quantity": 2}
-        )
+        response = client.post("/cart/add-item", json={"product_id": 1, "quantity": 2})
 
         assert response.status_code == 200
-        assert response.json() == {
-            "status": "success",
-            "message": "Item added to cart"
-        }
+        assert response.json() == {"status": "success", "message": "Item added to cart"}
 
         # Verify cart item was created
-        cart_item = db_session.query(CartItem).filter(
-            CartItem.user_id == mock_user["sub"],
-            CartItem.product_id == 1
-        ).first()
+        cart_item = (
+            db_session.query(CartItem)
+            .filter(CartItem.user_id == mock_user["sub"], CartItem.product_id == 1)
+            .first()
+        )
         assert cart_item is not None
         assert cart_item.quantity == 2
 
@@ -45,8 +40,7 @@ class TestAddItemToCart:
     def test_add_item_product_not_exists(self, client, db_session):
         """Test adding a non-existent product to cart."""
         response = client.post(
-            "/cart/add-item",
-            json={"product_id": 999, "quantity": 1}
+            "/cart/add-item", json={"product_id": 999, "quantity": 1}
         )
 
         assert response.status_code == 404
@@ -65,8 +59,7 @@ class TestAddItemToCart:
 
         # Try to add item without auth
         response = unauthenticated_client.post(
-            "/cart/add-item",
-            json={"product_id": 1, "quantity": 1}
+            "/cart/add-item", json={"product_id": 1, "quantity": 1}
         )
 
         assert response.status_code == 403
@@ -82,18 +75,13 @@ class TestRemoveItemFromCart:
         db_session.add(product)
         db_session.commit()
 
-        cart_item = CartItem(
-            user_id=mock_user["sub"],
-            product_id=1,
-            quantity=3
-        )
+        cart_item = CartItem(user_id=mock_user["sub"], product_id=1, quantity=3)
         db_session.add(cart_item)
         db_session.commit()
 
         # Remove item from cart
         response = client.post(
-            "/cart/remove-item",
-            json={"product_id": 1, "quantity": 1}
+            "/cart/remove-item", json={"product_id": 1, "quantity": 1}
         )
 
         assert response.status_code == 200
@@ -115,32 +103,28 @@ class TestRemoveItemFromCart:
         db_session.commit()
 
         response = client.post(
-            "/cart/remove-item",
-            json={"product_id": 1, "quantity": 1}
+            "/cart/remove-item", json={"product_id": 1, "quantity": 1}
         )
 
         assert response.status_code == 404
         assert "Item not found in cart" in response.json()["detail"]
 
-    def test_remove_item_not_authenticated(self, unauthenticated_client, db_session, mock_user):
+    def test_remove_item_not_authenticated(
+        self, unauthenticated_client, db_session, mock_user
+    ):
         """Test removing item without authentication."""
         # Create a test product and cart item
         product = Product(id=1, stock=5)
         db_session.add(product)
         db_session.commit()
 
-        cart_item = CartItem(
-            user_id=mock_user["sub"],
-            product_id=1,
-            quantity=2
-        )
+        cart_item = CartItem(user_id=mock_user["sub"], product_id=1, quantity=2)
         db_session.add(cart_item)
         db_session.commit()
 
         # Try to remove item without auth
         response = unauthenticated_client.post(
-            "/cart/remove-item",
-            json={"product_id": 1, "quantity": 1}
+            "/cart/remove-item", json={"product_id": 1, "quantity": 1}
         )
 
         assert response.status_code == 403
