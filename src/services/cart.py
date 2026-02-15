@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
-from fastapi import HTTPException, status
 from src.repositories.cart import CartRepository
 from src.repositories.product import ProductRepository
+from src.services.exceptions import CartNotFound, ProductNotFound
 
 
 class CartService:
@@ -26,42 +26,31 @@ class CartService:
             cart = self.cart_repo.get_by_user_id_with_lock(user_id)
 
         if not cart:
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Failed to retrieve active cart",
-            )
+            raise CartNotFound("Failed to retrieve active cart")
 
         # 2. Lock Product first (to ensure stock consistency)
         product = self.product_repo.get_by_id_with_lock(product_id)
 
         if not product:
-            raise HTTPException(status_code=404, detail="Product not found")
+            raise ProductNotFound(f"Product {product_id} not found")
 
-        try:
-            # 3. Use aggregate logic
-            cart.add_item(product, quantity)
-            self.session.commit()
-        except ValueError as e:
-            self.session.rollback()
-            raise HTTPException(status_code=400, detail=str(e))
+        # 3. Use aggregate logic
+        cart.add_item(product, quantity)
+        self.session.commit()
 
     def remove_item(self, user_id: str, product_id: int, quantity: int):
         # 1. Fetch and Lock Cart
         cart = self.cart_repo.get_by_user_id_with_lock(user_id)
 
         if not cart:
-            raise HTTPException(status_code=404, detail="Item not found in cart")
+            raise CartNotFound("Item not found in cart")
 
         # 2. Lock Product
         product = self.product_repo.get_by_id_with_lock(product_id)
 
         if not product:
-            raise HTTPException(status_code=404, detail="Product not found")
+            raise ProductNotFound(f"Product {product_id} not found")
 
-        try:
-            # 3. Use aggregate logic
-            cart.remove_item(product, quantity)
-            self.session.commit()
-        except ValueError as e:
-            self.session.rollback()
-            raise HTTPException(status_code=404, detail=str(e))
+        # 3. Use aggregate logic
+        cart.remove_item(product, quantity)
+        self.session.commit()

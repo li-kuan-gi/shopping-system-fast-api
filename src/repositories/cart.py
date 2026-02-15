@@ -9,9 +9,6 @@ class CartRepository:
     def __init__(self, session: Session):
         self.session = session
 
-    def get_by_user_id(self, user_id: str) -> Cart | None:
-        return self.session.query(Cart).filter(carts_table.c.user_id == user_id).first()
-
     def get_by_user_id_with_lock(self, user_id: str) -> Cart | None:
         return (
             self.session.query(Cart)
