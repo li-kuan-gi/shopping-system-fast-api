@@ -1,33 +1,84 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, UniqueConstraint
-from sqlalchemy.orm import declarative_base, relationship
+from sqlalchemy import (
+    Column,
+    Integer,
+    String,
+    ForeignKey,
+    UniqueConstraint,
+    Table,
+    MetaData,
+)
+from sqlalchemy.orm import registry, relationship
 
-Base = declarative_base()
-
-
-class Product(Base):
-    """Product model with only fields used in cart operations."""
-
-    __tablename__ = "products"
-
-    id = Column(Integer, primary_key=True, index=True)
-    stock = Column(Integer, nullable=False)
-
-    # Relationship to cart items
-    cart_items = relationship("CartItem", back_populates="product")
+# Define metadata and registry
+metadata = MetaData()
+mapper_registry = registry()
 
 
-class Cart(Base):
+# Define Tables
+products_table = Table(
+    "products",
+    metadata,
+    Column("id", Integer, primary_key=True, index=True),
+    Column("stock", Integer, nullable=False),
+)
+
+carts_table = Table(
+    "carts",
+    metadata,
+    Column("id", Integer, primary_key=True, index=True),
+    Column("user_id", String, unique=True, index=True, nullable=False),
+)
+
+cart_items_table = Table(
+    "cart_items",
+    metadata,
+    Column("id", Integer, primary_key=True, index=True, autoincrement=True),
+    Column("cart_id", Integer, ForeignKey("carts.id"), nullable=False),
+    Column("product_id", Integer, ForeignKey("products.id"), nullable=False),
+    Column("quantity", Integer, nullable=False),
+    UniqueConstraint("cart_id", "product_id", name="uq_cart_product"),
+)
+
+
+# Define Domain Classes
+class Product:
+    """Product domain model."""
+
+    id: int
+    stock: int
+
+    def __init__(self, id: int, stock: int):
+        self.id = id
+        self.stock = stock
+
+
+class CartItem:
+    """Cart item domain model."""
+
+    cart_id: int | None
+    product_id: int | None
+    quantity: int
+
+    def __init__(
+        self,
+        cart_id: int | None = None,
+        product_id: int | None = None,
+        quantity: int = 0,
+    ):
+        self.cart_id = cart_id
+        self.product_id = product_id
+        self.quantity = quantity
+
+
+class Cart:
     """Cart aggregate root."""
 
-    __tablename__ = "carts"
+    user_id: str
+    items: list[CartItem]
 
-    id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(String, unique=True, index=True, nullable=False)
-
-    # Relationship to cart items
-    items = relationship(
-        "CartItem", back_populates="cart", cascade="all, delete-orphan"
-    )
+    def __init__(self, user_id: str):
+        self.user_id = user_id
+        self.items = []
 
     def add_item(self, product: Product, quantity: int):
         """Add an item to the cart and decrease product stock."""
@@ -61,20 +112,22 @@ class Cart(Base):
         raise ValueError("Item not found in cart")
 
 
-class CartItem(Base):
-    """Cart item model linking carts to products."""
+# Map Classes to Tables
+_ = mapper_registry.map_imperatively(
+    Product,
+    products_table,
+)
 
-    __tablename__ = "cart_items"
+_ = mapper_registry.map_imperatively(
+    CartItem,
+    cart_items_table,
+    properties={
+        "product": relationship(Product),
+    },
+)
 
-    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
-    cart_id = Column(Integer, ForeignKey("carts.id"), nullable=False)
-    product_id = Column(Integer, ForeignKey("products.id"), nullable=False)
-    quantity = Column(Integer, nullable=False)
-
-    # Relationships
-    cart = relationship("Cart", back_populates="items")
-    product = relationship("Product", back_populates="cart_items")
-
-    __table_args__ = (
-        UniqueConstraint("cart_id", "product_id", name="uq_cart_product"),
-    )
+_ = mapper_registry.map_imperatively(
+    Cart,
+    carts_table,
+    properties={"items": relationship(CartItem, cascade="all, delete-orphan")},
+)
