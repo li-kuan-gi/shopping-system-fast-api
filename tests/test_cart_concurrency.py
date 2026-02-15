@@ -4,7 +4,7 @@ from sqlalchemy.orm import sessionmaker
 from src.main import app
 from src.database import get_db
 from src.dependencies import get_current_user
-from src.models import Product, CartItem
+from src.models import Product, Cart, CartItem
 
 
 def test_add_item_concurrency(test_engine, mock_user):
@@ -76,11 +76,9 @@ def test_add_item_concurrency(test_engine, mock_user):
         ), f"Race condition! Final stock {updated_product.stock} != expected {expected_stock}"
 
         # Also verify CartItem quantity
-        cart_item = (
-            db.query(CartItem)
-            .filter(CartItem.user_id == mock_user.id, CartItem.product_id == product_id)
-            .one()
-        )
+        cart = db.query(Cart).filter(Cart.user_id == mock_user.id).one()
+        cart_item = next(item for item in cart.items if item.product_id == product_id)
+
         assert cart_item.quantity == num_requests * quantity_to_add
         db.close()
 
@@ -147,11 +145,9 @@ def test_add_remove_alternating_concurrency(test_engine, mock_user):
         # Total change: +10 in cart, -10 in stock
         db = TestingSessionLocal()
         product = db.query(Product).filter(Product.id == product_id).one()
-        cart_item = (
-            db.query(CartItem)
-            .filter(CartItem.user_id == mock_user.id, CartItem.product_id == product_id)
-            .one()
-        )
+
+        cart = db.query(Cart).filter(Cart.user_id == mock_user.id).one()
+        cart_item = next(item for item in cart.items if item.product_id == product_id)
 
         assert product.stock == initial_stock - num_cycles
         assert cart_item.quantity == num_cycles
