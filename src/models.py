@@ -9,6 +9,8 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import registry, relationship
 
+from src.domain.exceptions import InsufficientStock, ItemNotFoundInCart
+
 # Define metadata and registry
 metadata = MetaData()
 mapper_registry = registry()
@@ -83,7 +85,7 @@ class Cart:
     def add_item(self, product: Product, quantity: int):
         """Add an item to the cart and decrease product stock."""
         if product.stock < quantity:
-            raise ValueError("Insufficient stock")
+            raise InsufficientStock()
 
         product.stock -= quantity
 
@@ -109,7 +111,7 @@ class Cart:
                     self.items.remove(item)
                 return
 
-        raise ValueError("Item not found in cart")
+        raise ItemNotFoundInCart()
 
 
 # Map Classes to Tables

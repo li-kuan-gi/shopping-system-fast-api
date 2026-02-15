@@ -42,7 +42,8 @@ class TestAddItemToCart:
         )
 
         assert response.status_code == 404
-        assert "Product not found" in response.json()["detail"]
+        assert "product" in response.json()["detail"].lower()
+        assert "not found" in response.json()["detail"].lower()
 
         # Verify no cart item was created
         cart_items = db_session.query(CartItem).all()
