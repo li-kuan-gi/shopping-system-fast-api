@@ -8,7 +8,9 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from jwt import PyJWK
 
 # This scheme expects "Authorization: Bearer <token>"
-security = HTTPBearer()
+# We set auto_error=False so we can manually handle missing credentials
+# and return 401 Unauthorized instead of the default 403 Forbidden.
+security = HTTPBearer(auto_error=False)
 
 
 @dataclass
@@ -17,12 +19,19 @@ class User:
 
 
 def get_current_user(
-    auth: Annotated[HTTPAuthorizationCredentials, Depends(security)],
+    auth: Annotated[HTTPAuthorizationCredentials | None, Depends(security)],
 ) -> User:
     """
     Verifies the JWT token locally using the Supabase JWT secret.
     Returns the decoded token payload if valid.
     """
+    if auth is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
     token = auth.credentials
     secret = os.environ.get("SUPABASE_JWT_SIGNING_KEY")
 
@@ -36,7 +45,7 @@ def get_current_user(
         # Verify the token using PyJWT
         payload = jwt.decode(
             token,
-            jwk,
+            jwk.key,
             algorithms=["ES256"],
             audience="authenticated",
             options={"verify_aud": True},

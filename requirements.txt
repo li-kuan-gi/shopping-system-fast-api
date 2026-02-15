@@ -1,6 +1,8 @@
-fastapi[standard]
-supabase
-pyjwt
-cryptography
-sqlalchemy
-psycopg2-binary
+fastapi[standard]==0.111.0
+supabase==2.4.5
+pyjwt==2.8.0
+cryptography==42.0.7
+sqlalchemy==2.0.30
+psycopg2-binary==2.9.9
+gunicorn==22.0.0
+python-dotenv==1.0.1
