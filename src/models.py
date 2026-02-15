@@ -9,8 +9,6 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import registry, relationship
 
-from src.domain.exceptions import InsufficientStock, ItemNotFoundInCart
-
 # Define metadata and registry
 metadata = MetaData()
 mapper_registry = registry()
@@ -42,77 +40,7 @@ cart_items_table = Table(
 )
 
 
-# Define Domain Classes
-class Product:
-    """Product domain model."""
-
-    id: int
-    stock: int
-
-    def __init__(self, id: int, stock: int):
-        self.id = id
-        self.stock = stock
-
-
-class CartItem:
-    """Cart item domain model."""
-
-    cart_id: int | None
-    product_id: int | None
-    quantity: int
-
-    def __init__(
-        self,
-        cart_id: int | None = None,
-        product_id: int | None = None,
-        quantity: int = 0,
-    ):
-        self.cart_id = cart_id
-        self.product_id = product_id
-        self.quantity = quantity
-
-
-class Cart:
-    """Cart aggregate root."""
-
-    user_id: str
-    items: list[CartItem]
-
-    def __init__(self, user_id: str):
-        self.user_id = user_id
-        self.items = []
-
-    def add_item(self, product: Product, quantity: int):
-        """Add an item to the cart and decrease product stock."""
-        if product.stock < quantity:
-            raise InsufficientStock()
-
-        product.stock -= quantity
-
-        # Update existing item or add new
-        for item in self.items:
-            if item.product_id == product.id:
-                item.quantity += quantity
-                return
-
-        new_item = CartItem(product_id=product.id, quantity=quantity)
-        self.items.append(new_item)
-
-    def remove_item(self, product: Product, quantity: int):
-        """Remove an item from the cart (or decrease quantity) and increase product stock."""
-        for item in self.items:
-            if item.product_id == product.id:
-                # Increase stock (don't return more than what was in the cart)
-                actual_return = min(item.quantity, quantity)
-                product.stock += actual_return
-
-                item.quantity -= quantity
-                if item.quantity <= 0:
-                    self.items.remove(item)
-                return
-
-        raise ItemNotFoundInCart()
-
+from src.domain.models import Product, Cart, CartItem
 
 # Map Classes to Tables
 _ = mapper_registry.map_imperatively(
