@@ -14,7 +14,7 @@ _ = os.environ.setdefault(
     "DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/unused"
 )
 
-from src.models import Base
+from src.models import metadata
 from src.database import get_db
 from src.dependencies import get_current_user, User
 
@@ -28,12 +28,12 @@ def test_engine():
     engine = create_engine(TEST_DATABASE_URL, echo=False)
 
     # Create all tables
-    Base.metadata.create_all(bind=engine)
+    metadata.create_all(bind=engine)
 
     yield engine
 
     # Drop all tables after tests
-    Base.metadata.drop_all(bind=engine)
+    metadata.drop_all(bind=engine)
     engine.dispose()
 
 
@@ -52,7 +52,7 @@ def db_session(test_engine):
     session.close()
 
     # Clean up all data after each test
-    for table in reversed(Base.metadata.sorted_tables):
+    for table in reversed(metadata.sorted_tables):
         session.execute(table.delete())
         session.commit()
 
