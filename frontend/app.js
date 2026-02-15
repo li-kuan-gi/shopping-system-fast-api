@@ -137,24 +137,29 @@ function toggleCart(show) {
 async function fetchCart() {
     try {
         const { data, error } = await supabaseClient
-            .from('cart_items')
+            .from('carts')
             .select(`
-                id,
-                product_id,
-                quantity,
-                products (
-                    name,
-                    price
+                items:cart_items (
+                    id,
+                    product_id,
+                    quantity,
+                    products (
+                        name,
+                        price
+                    )
                 )
-            `);
+            `)
+            .eq('user_id', currentUser.id)
+            .maybeSingle();
 
         if (error) throw error;
-        cartItems = data || [];
+        cartItems = data?.items || [];
         updateCartUI();
     } catch (error) {
         console.error('Error fetching cart:', error);
     }
 }
+
 
 async function addToCart(productId) {
     if (!currentUser) return openModal('login');

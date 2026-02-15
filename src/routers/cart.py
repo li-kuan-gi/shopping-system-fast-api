@@ -1,8 +1,9 @@
 from typing import Annotated
 from fastapi import APIRouter, HTTPException, status, Depends
 from sqlalchemy.orm import Session
+from sqlalchemy.dialects.postgresql import insert as pg_insert
 from src.database import get_db
-from src.models import Product, CartItem
+from src.models import Product, Cart
 from src.schemas import CartItemOperation
 from src.dependencies import get_current_user, User
 
@@ -17,7 +18,18 @@ def add_item_to_cart(
 ):
     user_id: str = user.id
 
-    # Check product stock with row-level lock
+    # 1. Atomic Cart Fetch/Create using ON CONFLICT
+    stmt = (
+        pg_insert(Cart)
+        .values(user_id=user_id)
+        .on_conflict_do_nothing(index_elements=["user_id"])
+    )
+    db.execute(stmt)
+
+    # Lock Cart for update
+    cart = db.query(Cart).filter(Cart.user_id == user_id).with_for_update().one()
+
+    # 2. Lock Product first (to ensure stock consistency)
     product = (
         db.query(Product)
         .filter(Product.id == operation.product_id)
@@ -28,35 +40,13 @@ def add_item_to_cart(
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
 
-    if product.stock < operation.quantity:
-        raise HTTPException(status_code=400, detail="Insufficient stock")
-
-    # Decrease product stock
-    product.stock -= operation.quantity
-
-    # Check if item exists in cart
-    cart_item = (
-        db.query(CartItem)
-        .filter(
-            CartItem.user_id == user_id, CartItem.product_id == operation.product_id
-        )
-        .first()
-    )
-
-    if cart_item:
-        # Update existing item
-        cart_item.quantity += operation.quantity
-    else:
-        # Insert new item
-        cart_item = CartItem(
-            user_id=user_id,
-            product_id=operation.product_id,
-            quantity=operation.quantity,
-        )
-        db.add(cart_item)
-
-    # Commit the transaction
-    db.commit()
+    try:
+        # 3. Use aggregate logic
+        cart.add_item(product, operation.quantity)
+        db.commit()
+    except ValueError as e:
+        db.rollback()
+        raise HTTPException(status_code=400, detail=str(e))
 
     return {"status": "success", "message": "Item added to cart"}
 
@@ -69,7 +59,13 @@ def remove_item_from_cart(
 ):
     user_id = user.id
 
-    # Lock Product first (Acts as a gatekeeper for this product)
+    # 1. Fetch and Lock Cart
+    cart = db.query(Cart).filter(Cart.user_id == user_id).with_for_update().first()
+
+    if not cart:
+        raise HTTPException(status_code=404, detail="Item not found in cart")
+
+    # 2. Lock Product
     product = (
         db.query(Product)
         .filter(Product.id == operation.product_id)
@@ -77,30 +73,20 @@ def remove_item_from_cart(
         .first()
     )
 
-    cart_item = (
-        db.query(CartItem)
-        .filter(
-            CartItem.user_id == user_id, CartItem.product_id == operation.product_id
-        )
-        .first()
-    )
+    # Logic: Even if product is missing from DB (shouldn't happen with FKs),
+    # we still need to handle it if we want to remove the item.
+    # But usually, it's safer to just proceed if cart has it.
+    if not product:
+        # In a real system, we might still want to allow removal even if product is gone,
+        # but here product.stock needs to be updated.
+        raise HTTPException(status_code=404, detail="Product not found")
 
-    if not cart_item:
-        raise HTTPException(status_code=404, detail="Item not found in cart")
-
-    # Calculate new quantity
-    new_quantity: int = cart_item.quantity - operation.quantity
-
-    if product:
-        product.stock += operation.quantity
-
-    if new_quantity <= 0:
-        # Delete item
-        db.delete(cart_item)
+    try:
+        # 3. Use aggregate logic
+        cart.remove_item(product, operation.quantity)
         db.commit()
-        return {"status": "success", "message": "Item removed from cart"}
-    else:
-        # Update quantity
-        cart_item.quantity = new_quantity
-        db.commit()
-        return {"status": "success", "message": "Item quantity decreased"}
+    except ValueError as e:
+        db.rollback()
+        raise HTTPException(status_code=404, detail=str(e))
+
+    return {"status": "success", "message": "Item removed from cart"}

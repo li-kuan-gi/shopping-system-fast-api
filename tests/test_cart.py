@@ -5,7 +5,7 @@ These tests use a real Postgres database running in Docker to verify
 the cart endpoints work correctly with actual database operations.
 """
 
-from src.models import Product, CartItem
+from src.models import Product, Cart, CartItem
 
 
 class TestAddItemToCart:
@@ -24,14 +24,12 @@ class TestAddItemToCart:
         assert response.status_code == 200
         assert response.json() == {"status": "success", "message": "Item added to cart"}
 
-        # Verify cart item was created
-        cart_item = (
-            db_session.query(CartItem)
-            .filter(CartItem.user_id == mock_user.id, CartItem.product_id == 1)
-            .first()
-        )
-        assert cart_item is not None
-        assert cart_item.quantity == 2
+        # Verify cart was created and item exists
+        cart = db_session.query(Cart).filter(Cart.user_id == mock_user.id).first()
+        assert cart is not None
+        assert len(cart.items) == 1
+        assert cart.items[0].product_id == 1
+        assert cart.items[0].quantity == 2
 
         # Verify product stock was decreased
         db_session.refresh(product)
@@ -70,12 +68,15 @@ class TestRemoveItemFromCart:
 
     def test_remove_item_successfully(self, client, db_session, mock_user):
         """Test successfully removing an item from the cart."""
-        # Create a test product and cart item
+        # Create a test product, cart, and cart item
         product = Product(id=1, stock=5)
         db_session.add(product)
+
+        cart = Cart(user_id=mock_user.id)
+        db_session.add(cart)
         db_session.commit()
 
-        cart_item = CartItem(user_id=mock_user.id, product_id=1, quantity=3)
+        cart_item = CartItem(cart_id=cart.id, product_id=1, quantity=3)
         db_session.add(cart_item)
         db_session.commit()
 
@@ -113,12 +114,15 @@ class TestRemoveItemFromCart:
         self, unauthenticated_client, db_session, mock_user
     ):
         """Test removing item without authentication."""
-        # Create a test product and cart item
+        # Create a test product, cart and cart item
         product = Product(id=1, stock=5)
         db_session.add(product)
+
+        cart = Cart(user_id=mock_user.id)
+        db_session.add(cart)
         db_session.commit()
 
-        cart_item = CartItem(user_id=mock_user.id, product_id=1, quantity=2)
+        cart_item = CartItem(cart_id=cart.id, product_id=1, quantity=2)
         db_session.add(cart_item)
         db_session.commit()
 
