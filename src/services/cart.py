@@ -15,11 +15,15 @@ class CartService:
         self.product_repo = ProductRepository(session)
 
     def add_item(self, user_id: str, product_id: int, quantity: int):
-        # 1. Atomic Cart Fetch/Create
-        self.cart_repo.create_if_not_exists(user_id)
-
-        # Lock Cart for update
+        # 1. Optimistic Cart Fetch/Lock
+        # Try to get the cart first (common case)
         cart = self.cart_repo.get_by_user_id_with_lock(user_id)
+
+        # If not found, create it (rare case)
+        if not cart:
+            self.cart_repo.create_if_not_exists(user_id)
+            # Fetch again after creation
+            cart = self.cart_repo.get_by_user_id_with_lock(user_id)
 
         if not cart:
             raise HTTPException(
