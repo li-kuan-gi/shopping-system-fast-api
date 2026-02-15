@@ -45,7 +45,7 @@ def get_current_user(
         # Verify the token using PyJWT
         payload = jwt.decode(
             token,
-            jwk,
+            jwk.key,
             algorithms=["ES256"],
             audience="authenticated",
             options={"verify_aud": True},
