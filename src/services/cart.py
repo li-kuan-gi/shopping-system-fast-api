@@ -1,4 +1,5 @@
 from sqlalchemy.orm import Session
+from src.domain.services import add_item_to_cart, remove_item_from_cart
 from src.repositories.cart import CartRepository
 from src.repositories.product import ProductRepository
 from src.services.exceptions import CartNotFound, ProductNotFound
@@ -34,8 +35,8 @@ class CartService:
         if not product:
             raise ProductNotFound(f"Product {product_id} not found")
 
-        # 3. Use aggregate logic
-        cart.add_item(product, quantity)
+        # 3. Use domain service
+        add_item_to_cart(cart, product, quantity)
         self.session.commit()
 
     def remove_item(self, user_id: str, product_id: int, quantity: int):
@@ -51,6 +52,6 @@ class CartService:
         if not product:
             raise ProductNotFound(f"Product {product_id} not found")
 
-        # 3. Use aggregate logic
-        cart.remove_item(product, quantity)
+        # 3. Use domain service
+        remove_item_from_cart(cart, product, quantity)
         self.session.commit()
