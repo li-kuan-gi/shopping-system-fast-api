@@ -2,11 +2,22 @@
 
 A robust, production-ready shopping cart system built with **FastAPI** and **PostgreSQL**.
 
-This project demonstrates advanced architectural patterns including **CQRS** (Command Query Responsibility Segregation), **Domain-Driven Design (DDD)** principles, and a structured **Logging System** with correlation IDs.
+This project demonstrates advanced architectural patterns including **Domain-Driven Design (DDD)** principles, **CQRS** (Command Query Responsibility Segregation), and a structured **Logging System** with correlation IDs.
 
 ## 🌟 Key Architectural Features
 
-### 1. CQRS (Command Query Responsibility Segregation)
+### 1. Domain Services (DDD)
+This project utilizes **Domain Services** to handle business logic that spans multiple aggregates, avoiding overburdening individual entities or leaking domain rules into the application layer.
+
+**Why Domain Services?**
+In `src/shopping/domain.py`, the `add_item_to_cart` function orchestrates the interaction between `Cart` and `Product`.
+
+- **Vs. Entity Method**: Placing this logic in the `Cart` entity would force it to manage `Product` stock levels. However, a `Cart` should remain agnostic of inventory management and the origin of its items. Conversely, placing it in `Product` would leak cart-specific logic into the product aggregate.
+- **Vs. Application Service**: Moving this to the `CartService` (Application Layer) often results in an "Anemic Domain Model," where entities become simple data containers and business rules are fragmented across service classes.
+
+The **Domain Service** approach keeps cross-aggregate logic within the domain layer, ensuring core business rules remain centralized, pure, and testable.
+
+### 2. CQRS (Command Query Responsibility Segregation)
 The system separates **Command** (Write) operations from **Query** (Read) operations to optimize performance, scalability, and security.
 
 - **Commands**: Complex write operations (adding/removing items) are handled through dedicated services that enforce strict business rules, transactional integrity, and concurrency control.
@@ -14,17 +25,6 @@ The system separates **Command** (Write) operations from **Query** (Read) operat
 - **Queries**: The Read side is powered by **Supabase**.
     - The frontend application queries Supabase directly via its auto-generated API.
     - This separation allows for high-performance reads and real-time subscriptions without loading the primary transactional backend.
-
-### 2. Domain Services using DDD
-This project explicitly uses **Domain Services** for business logic that spans multiple entities/aggregates, rather than forcing this logic into a single entity or leaking it into the application layer.
-
-**Why Domain Services?**
-In `src/shopping/domain.py`, you will see functions like `add_item_to_cart(cart, product, quantity)`.
-
-- **Vs. Entity Method**: Placing this logic on the `Cart` entity would require the `Cart` to know about and modify `Product` stock, violating the `Product` aggregate's boundary. Placing it on `Product` would require `Product` to know about `Cart` internals.
-- **Vs. Service Layer**: Placing this logic in the `CartService` (Application Layer) would lead to an "Anemic Domain Model," where entities are just data holders and business rules are scattered in the service layer.
-
-The **Domain Service** approach encapsulates this cross-aggregate logic (`Cart` items + `Product` stock) within the domain layer, keeping the core business rules pure and testable.
 
 ### 3. Structured Logging & Correlation IDs
 The system implements a robust logging strategy in `src/logging_config.py` and `src/main.py`.
