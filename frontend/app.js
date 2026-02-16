@@ -74,25 +74,50 @@ function updateModalUI() {
     }
 }
 
+// Loading States
+function setLoading(element, isLoading, loadingText = null) {
+    if (!element) return;
+
+    if (isLoading) {
+        element.classList.add('loading');
+        element.disabled = true;
+        if (loadingText) {
+            element.dataset.originalText = element.textContent;
+            element.textContent = loadingText;
+        }
+    } else {
+        element.classList.remove('loading');
+        element.disabled = false;
+        if (loadingText && element.dataset.originalText) {
+            element.textContent = element.dataset.originalText;
+        }
+    }
+}
+
 // Auth Functions
 async function handleAuthAction() {
     const email = modalEmailInput.value;
     const password = modalPasswordInput.value;
     if (!email || !password) return alert('Please enter email and password');
 
-    if (modalMode === 'login') {
-        const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
-        if (error) alert(error.message);
-        else closeModal();
-    } else {
-        const { data, error } = await supabaseClient.auth.signUp({ email, password });
-        if (error) {
-            alert(error.message);
+    setLoading(modalSubmitBtn, true, modalMode === 'login' ? 'Logging in...' : 'Registering...');
+    try {
+        if (modalMode === 'login') {
+            const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+            if (error) alert(error.message);
+            else closeModal();
         } else {
-            alert('Registration successful! Please check your email.');
-            modalMode = 'login';
-            updateModalUI();
+            const { data, error } = await supabaseClient.auth.signUp({ email, password });
+            if (error) {
+                alert(error.message);
+            } else {
+                alert('Registration successful! Please check your email.');
+                modalMode = 'login';
+                updateModalUI();
+            }
         }
+    } finally {
+        setLoading(modalSubmitBtn, false);
     }
 }
 
@@ -164,6 +189,12 @@ async function fetchCart() {
 async function addToCart(productId) {
     if (!currentUser) return openModal('login');
 
+    // Find the button that was clicked
+    const btn = event?.currentTarget || document.activeElement;
+    const isCartBtn = btn && (btn.classList.contains('btn-add-cart') || btn.classList.contains('quantity-btn'));
+
+    if (isCartBtn) setLoading(btn, true);
+
     try {
         const { data: { session } } = await supabaseClient.auth.getSession();
         const token = session?.access_token;
@@ -179,15 +210,22 @@ async function addToCart(productId) {
 
         if (!response.ok) throw new Error('Failed to add item to cart');
 
-        fetchCart();
-        fetchProducts();
+        await fetchCart();
+        await fetchProducts();
     } catch (error) {
         console.error('Error adding to cart:', error);
         alert('Error adding to cart');
+    } finally {
+        if (isCartBtn) setLoading(btn, false);
     }
 }
 
 async function removeFromCart(productId, quantity = 1) {
+    const btn = event?.currentTarget || document.activeElement;
+    const isCartBtn = btn && btn.classList.contains('quantity-btn');
+
+    if (isCartBtn) setLoading(btn, true);
+
     try {
         const { data: { session } } = await supabaseClient.auth.getSession();
         const token = session?.access_token;
@@ -203,11 +241,13 @@ async function removeFromCart(productId, quantity = 1) {
 
         if (!response.ok) throw new Error('Failed to remove item from cart');
 
-        fetchCart();
-        fetchProducts();
+        await fetchCart();
+        await fetchProducts();
     } catch (error) {
         console.error('Error removing from cart:', error);
         alert('Error removing from cart');
+    } finally {
+        if (isCartBtn) setLoading(btn, false);
     }
 }
 
