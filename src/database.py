@@ -4,7 +4,7 @@ from sqlalchemy.orm import sessionmaker, Session
 from collections.abc import Generator
 from dotenv import load_dotenv
 
-load_dotenv()
+_ = load_dotenv()
 
 DATABASE_URL = os.environ.get("DATABASE_URL")
 

@@ -2,7 +2,7 @@ import logging
 from sqlalchemy.orm import Session
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from src.shopping.domain import Cart, Product
-from src.models import carts_table, products_table
+from src.shopping.models import carts_table, products_table
 
 logger = logging.getLogger(__name__)
 

@@ -14,7 +14,7 @@ _ = os.environ.setdefault(
     "DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/unused"
 )
 
-from src.models import metadata
+from src.shopping.models import metadata
 from src.database import get_db
 from src.auth.domain import User
 from src.auth.dependencies import get_current_user
