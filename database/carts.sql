@@ -5,8 +5,4 @@ create table public.carts (
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
--- Enable Row Level Security (RLS)
-alter table public.carts enable row level security;
 
--- Create policies
-create policy "Users can view own cart" on public.carts for select to authenticated using (auth.uid()::text = user_id);

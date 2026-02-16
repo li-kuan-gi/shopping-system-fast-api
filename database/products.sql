@@ -9,11 +9,4 @@ create table public.products (
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
--- Enable Row Level Security (RLS)
-alter table public.products enable row level security;
 
--- Create policies
-create policy "Enable read access for all users" on public.products for select using (true);
-
--- Permissions
-revoke select on public.products from anon;

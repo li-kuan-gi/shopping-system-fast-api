@@ -8,13 +8,4 @@ create table public.cart_items (
   unique(cart_id, product_id)
 );
 
--- Enable Row Level Security (RLS)
-alter table public.cart_items enable row level security;
 
--- Create policies
-create policy "Users can view own cart items" on public.cart_items for select to authenticated using (
-  exists (
-    select 1 from public.carts
-    where id = cart_items.cart_id and user_id = auth.uid()::text
-  )
-);

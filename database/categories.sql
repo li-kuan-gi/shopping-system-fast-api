@@ -5,11 +5,4 @@ create table public.categories (
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
--- Enable Row Level Security (RLS)
-alter table public.categories enable row level security;
 
--- Create policies
-create policy "Enable read access for all users" on public.categories for select using (true);
-
--- Permissions
-revoke select on public.categories from anon;

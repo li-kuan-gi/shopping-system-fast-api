@@ -11,5 +11,4 @@ from
   public.products p
   left join public.categories c on p.category_id = c.id;
 
--- Grant access to the view
-grant select on public.products_view to anon;
+
