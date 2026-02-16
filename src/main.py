@@ -12,7 +12,7 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from contextvars import Token
-from src.routers import cart
+from src.shopping.router import router as cart_router
 from src.logging_config import setup_logging, log_context
 from src.database import get_db
 
@@ -120,4 +120,4 @@ async def health(db: Annotated[Session, Depends(get_db)]) -> Response:
         )
 
 
-app.include_router(cart.router)
+app.include_router(cart_router)

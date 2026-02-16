@@ -1,11 +1,17 @@
 import logging
 from sqlalchemy.orm import Session
-from src.domain.services import add_item_to_cart, remove_item_from_cart
-from src.repositories.cart import CartRepository
-from src.repositories.product import ProductRepository
-from src.services.exceptions import CartNotFound, ProductNotFound
+from src.shopping.domain import add_item_to_cart, remove_item_from_cart
+from src.shopping.repository import CartRepository, ProductRepository
 
 logger = logging.getLogger(__name__)
+
+
+class CartNotFound(Exception):
+    pass
+
+
+class ProductNotFound(Exception):
+    pass
 
 
 class CartService:

@@ -1,7 +1,12 @@
 import pytest
-from src.domain.models import Product, Cart, CartItem
-from src.domain.services import add_item_to_cart, remove_item_from_cart
-from src.domain.exceptions import InsufficientStock, ItemNotFoundInCart
+from src.shopping.domain import Product, InsufficientStock
+from src.shopping.domain import (
+    Cart,
+    CartItem,
+    ItemNotFoundInCart,
+    add_item_to_cart,
+    remove_item_from_cart,
+)
 
 
 def test_product_initialization():

@@ -1,4 +1,3 @@
-from dataclasses import dataclass
 import os
 import jwt
 import json
@@ -6,16 +5,12 @@ from typing import Annotated, cast
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from jwt import PyJWK
+from src.auth.domain import User
 
 # This scheme expects "Authorization: Bearer <token>"
 # We set auto_error=False so we can manually handle missing credentials
 # and return 401 Unauthorized instead of the default 403 Forbidden.
 security = HTTPBearer(auto_error=False)
-
-
-@dataclass
-class User:
-    id: str
 
 
 def get_current_user(
@@ -69,12 +64,3 @@ def get_current_user(
             detail=f"Invalid token: {str(e)}",
             headers={"WWW-Authenticate": "Bearer"},
         )
-
-
-from sqlalchemy.orm import Session
-from src.database import get_db
-from src.services.cart import CartService
-
-
-def get_cart_service(db: Annotated[Session, Depends(get_db)]) -> CartService:
-    return CartService(db)

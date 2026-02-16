@@ -16,7 +16,8 @@ _ = os.environ.setdefault(
 
 from src.models import metadata
 from src.database import get_db
-from src.dependencies import get_current_user, User
+from src.auth.domain import User
+from src.auth.dependencies import get_current_user
 
 # Test database URL (matches docker-compose.test.yml)
 TEST_DATABASE_URL = "postgresql://postgres:postgres@localhost:5433/shopping_test"

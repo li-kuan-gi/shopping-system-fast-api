@@ -5,7 +5,7 @@ These tests use a real Postgres database running in Docker to verify
 the cart endpoints work correctly with actual database operations.
 """
 
-from src.models import Product, Cart, CartItem
+from src.shopping.domain import Product, Cart, CartItem
 
 
 class TestAddItemToCart:

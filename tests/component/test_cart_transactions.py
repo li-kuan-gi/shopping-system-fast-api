@@ -1,7 +1,7 @@
 import concurrent.futures
 from sqlalchemy.orm import sessionmaker
-from src.services.cart import CartService
-from src.models import Product, Cart
+from src.shopping.service import CartService
+from src.shopping.domain import Product, Cart
 
 
 def test_cart_service_add_item_concurrency(test_engine, mock_user):
