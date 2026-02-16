@@ -1,8 +1,7 @@
 import pytest
 from unittest.mock import MagicMock, patch
-from src.services.cart import CartService
-from src.services.exceptions import CartNotFound, ProductNotFound
-from src.domain.models import Cart, Product
+from src.shopping.service import CartService, CartNotFound, ProductNotFound
+from src.shopping.domain import Cart, Product
 
 
 @pytest.fixture
@@ -21,7 +20,7 @@ def cart_service(mock_session):
     return service
 
 
-@patch("src.services.cart.add_item_to_cart")
+@patch("src.shopping.service.add_item_to_cart")
 def test_add_item_success(mock_add_item, cart_service, mock_session):
     # Setup
     user_id = "user1"
@@ -42,7 +41,7 @@ def test_add_item_success(mock_add_item, cart_service, mock_session):
     mock_session.commit.assert_called_once()
 
 
-@patch("src.services.cart.add_item_to_cart")
+@patch("src.shopping.service.add_item_to_cart")
 def test_add_item_cart_not_found_initially_creates_it(
     mock_add_item, cart_service, mock_session
 ):
@@ -75,7 +74,7 @@ def test_add_item_product_not_found_raises_error(cart_service):
         cart_service.add_item("user1", 999, 1)
 
 
-@patch("src.services.cart.remove_item_from_cart")
+@patch("src.shopping.service.remove_item_from_cart")
 def test_remove_item_success(mock_remove_item, cart_service, mock_session):
     # Setup
     user_id = "user1"

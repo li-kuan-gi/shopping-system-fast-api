@@ -40,7 +40,7 @@ cart_items_table = Table(
 )
 
 
-from src.domain.models import Product, Cart, CartItem
+from src.shopping.domain import Product, Cart, CartItem
 
 # Map Classes to Tables
 _ = mapper_registry.map_imperatively(

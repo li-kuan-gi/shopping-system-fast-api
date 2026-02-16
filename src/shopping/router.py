@@ -1,11 +1,12 @@
 import logging
 from typing import Annotated
 from fastapi import APIRouter, status, Depends, HTTPException
-from src.schemas import CartItemOperation
-from src.dependencies import get_current_user, User, get_cart_service
-from src.services.cart import CartService
-from src.domain.exceptions import InsufficientStock, ItemNotFoundInCart
-from src.services.exceptions import CartNotFound, ProductNotFound
+from src.shopping.schemas import CartItemOperation
+from src.auth.dependencies import get_current_user
+from src.auth.domain import User
+from src.shopping.dependencies import get_cart_service
+from src.shopping.service import CartService, CartNotFound, ProductNotFound
+from src.shopping.domain import InsufficientStock, ItemNotFoundInCart
 
 router = APIRouter(prefix="/cart", tags=["cart"])
 logger = logging.getLogger(__name__)

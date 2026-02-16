@@ -1,7 +1,11 @@
 import pytest
-from src.domain.models import Product, Cart, CartItem
-from src.domain.services import add_item_to_cart, remove_item_from_cart
-from src.domain.exceptions import InsufficientStock, ItemNotFoundInCart
+from src.shopping.domain import Product, InsufficientStock
+from src.shopping.domain import (
+    Cart,
+    ItemNotFoundInCart,
+    add_item_to_cart,
+    remove_item_from_cart,
+)
 
 
 def test_product_initialization():
@@ -57,7 +61,7 @@ def test_cart_remove_item_success():
     product = Product(id=1, stock=10)
     cart.add_item(product, 5)
 
-    cart.remove_item(product, 2)
+    _ = cart.remove_item(product, 2)
 
     assert cart.items[0].quantity == 3
     # Product stock should NOT change here
@@ -69,7 +73,7 @@ def test_cart_remove_item_completely_removes_from_list():
     product = Product(id=1, stock=10)
     cart.add_item(product, 5)
 
-    cart.remove_item(product, 5)
+    _ = cart.remove_item(product, 5)
 
     assert len(cart.items) == 0
 
@@ -79,7 +83,7 @@ def test_cart_remove_non_existent_item_raises_error():
     product = Product(id=1, stock=10)
 
     with pytest.raises(ItemNotFoundInCart):
-        cart.remove_item(product, 1)
+        _ = cart.remove_item(product, 1)
 
 
 def test_add_item_to_cart_service():

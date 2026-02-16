@@ -1,6 +1,5 @@
-import pytest
-from src.repositories.cart import CartRepository
-from src.models import Cart
+from src.shopping.repository import CartRepository
+from src.shopping.domain import Cart
 
 
 def test_cart_repo_create_if_not_exists(db_session):

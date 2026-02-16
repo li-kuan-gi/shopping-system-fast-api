@@ -1,6 +1,5 @@
-import pytest
-from src.repositories.product import ProductRepository
-from src.models import Product
+from src.shopping.repository import ProductRepository
+from src.shopping.domain import Product
 
 
 def test_product_repo_get_by_id(db_session):
