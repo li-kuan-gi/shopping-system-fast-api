@@ -2,6 +2,7 @@ import concurrent.futures
 from sqlalchemy.orm import sessionmaker
 from src.shopping.service import CartService
 from src.shopping.domain import Product, Cart
+from src.shopping.domain import InsufficientStock
 
 
 def test_cart_service_add_item_concurrency(test_engine, mock_user):
@@ -109,7 +110,6 @@ def test_cart_service_rollback_on_failure(test_engine):
     Test that if an operation fails (e.g. InsufficientStock),
     no changes are persisted to the database (rollback behavior).
     """
-    from src.domain.exceptions import InsufficientStock
 
     TestingSessionLocal = sessionmaker(
         autocommit=False, autoflush=False, bind=test_engine
