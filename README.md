@@ -96,6 +96,9 @@ graph TD
     Render -->|Persists Data| Supabase
 ```
 
+> [!NOTE]
+> The backend is hosted on Render's free tier, which spins down after periods of inactivity. If the service is "cold," the first request (such as adding an item to the cart) may take up to 60 seconds to process as the instance boots up.
+
 ## 💻 Local Development
 
 Follow these steps to run the backend engine locally.
