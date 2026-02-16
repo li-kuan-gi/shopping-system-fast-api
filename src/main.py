@@ -94,7 +94,6 @@ async def root() -> dict[str, object]:
     return {
         "status": "success",
         "message": "Shopping System API is healthy",
-        "environment": os.getenv("RENDER_EXTERNAL_URL", "development"),
     }
 
 

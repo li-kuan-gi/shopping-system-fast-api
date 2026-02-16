@@ -43,7 +43,7 @@ def mock_env_signing_key(
     test_key_pair: tuple[ec.EllipticCurvePrivateKey, Mapping[str, object]],
 ) -> None:
     _, jwk = test_key_pair
-    monkeypatch.setenv("SUPABASE_JWT_SIGNING_KEY", json.dumps(jwk))
+    monkeypatch.setenv("JWT_SIGNING_KEY", json.dumps(jwk))
 
 
 @pytest.mark.usefixtures("mock_env_signing_key")
@@ -63,7 +63,7 @@ def test_get_current_user_success(
 
 
 def test_get_current_user_missing_secret(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.delenv("SUPABASE_JWT_SIGNING_KEY", raising=False)
+    monkeypatch.delenv("JWT_SIGNING_KEY", raising=False)
 
     auth = MagicMock(spec=HTTPAuthorizationCredentials)
     auth.credentials = "some-token"

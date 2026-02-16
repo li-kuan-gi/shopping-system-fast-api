@@ -28,7 +28,7 @@ def get_current_user(
         )
 
     token = auth.credentials
-    secret = os.environ.get("SUPABASE_JWT_SIGNING_KEY")
+    secret = os.environ.get("JWT_SIGNING_KEY")
 
     if not secret:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
