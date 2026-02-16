@@ -2,7 +2,7 @@ import os
 import sys
 import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 
 # Add project root to sys.path so that "src" can be imported
@@ -23,13 +23,36 @@ from src.auth.dependencies import get_current_user
 TEST_DATABASE_URL = "postgresql://postgres:postgres@localhost:5433/shopping_test"
 
 
+def run_sql_scripts(engine):
+    """Manually create tables using SQL scripts from database/ directory."""
+    database_dir = os.path.abspath(
+        os.path.join(os.path.dirname(__file__), "..", "database")
+    )
+    init_sql_path = os.path.join(database_dir, "init.sql")
+
+    with engine.connect() as connection:
+        with open(init_sql_path, "r") as f:
+            lines = f.readlines()
+
+        for line in lines:
+            line = line.strip()
+            if line.startswith("\\i "):
+                sql_file = line[3:].strip()
+                sql_file_path = os.path.join(database_dir, sql_file)
+                with open(sql_file_path, "r") as sf:
+                    sql_content = sf.read()
+                    # Execute each SQL script
+                    connection.execute(text(sql_content))
+        connection.commit()
+
+
 @pytest.fixture(scope="session")
 def test_engine():
     """Create a test database engine for the entire test session."""
     engine = create_engine(TEST_DATABASE_URL, echo=False)
 
-    # Create all tables
-    metadata.create_all(bind=engine)
+    # Manually create tables using SQL scripts
+    run_sql_scripts(engine)
 
     yield engine
 
