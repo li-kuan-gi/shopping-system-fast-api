@@ -12,6 +12,7 @@ on:
       - 'Dockerfile'
       - '.dockerignore'
       - '.github/workflows/deploy.yml'
+      - 'database/**'
   pull_request:
     types: [opened, synchronize, reopened]
     branches:
@@ -24,6 +25,7 @@ on:
       - 'Dockerfile'
       - '.dockerignore'
       - '.github/workflows/deploy.yml'
+      - 'database/**'
   workflow_dispatch:
 
 jobs:
